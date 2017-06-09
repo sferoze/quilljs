@@ -228,11 +228,13 @@ class Selection {
     }
     if (first == null || last == null) return;
     let scroller = this.scroll.scrollingContainer;
-    let scrollBounds = scroller.getBoundingClientRect();
-    if (bounds.top < scrollBounds.top) {
-      scroller.scrollTop -= (scrollBounds.top - bounds.top);
-    } else if (bounds.bottom > scrollBounds.bottom) {
-      scroller.scrollTop += (bounds.bottom - scrollBounds.bottom);
+    //let scrollBounds = scroller.getBoundingClientRect();
+    let headerHeight = 65;
+    let windowHeight = window.innerHeight - 20;
+    if (bounds.top < headerHeight) {
+      scroller.scrollTop -= (headerHeight - bounds.top);
+    } else if (bounds.bottom > windowHeight) {
+      scroller.scrollTop += (bounds.bottom - windowHeight);
     }
   }
 

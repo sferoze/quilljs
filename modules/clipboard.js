@@ -58,6 +58,22 @@ class Clipboard extends Module {
     super(quill, options);
     this.quill.root.addEventListener('paste', this.onPaste.bind(this));
     this.container = this.quill.addContainer('ql-clipboard');
+    this.container.addEventListener('focus', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.scrollTop) {
+        this.quill.scrollingContainer.scrollTop = this.scrollTop
+      }
+      return false;
+    });
+    this.container.addEventListener('scroll', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (this.scrollTop) {
+        this.quill.scrollingContainer.scrollTop = this.scrollTop
+      }
+      return false;
+    });
     this.container.setAttribute('contenteditable', true);
     this.container.setAttribute('tabindex', -1);
     this.matchers = [];
@@ -99,6 +115,7 @@ class Clipboard extends Module {
     let range = this.quill.getSelection();
     let delta = new Delta().retain(range.index);
     let scrollTop = this.quill.scrollingContainer.scrollTop;
+    this.scrollTop = scrollTop;
     this.container.focus();
     setTimeout(() => {
       this.quill.selection.update(Quill.sources.SILENT);
@@ -107,6 +124,7 @@ class Clipboard extends Module {
       // range.length contributes to delta.length()
       this.quill.setSelection(delta.length() - range.length, Quill.sources.SILENT);
       this.quill.scrollingContainer.scrollTop = scrollTop;
+      this.scrollTop = null;
       this.quill.selection.scrollIntoView();
     }, 1);
   }
