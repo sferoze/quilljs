@@ -231,10 +231,12 @@ class Selection {
     //let scrollBounds = scroller.getBoundingClientRect();
     let headerHeight = 65;
     let windowHeight = window.innerHeight - 20;
-    if (bounds.top < headerHeight) {
-      scroller.scrollTop -= (headerHeight - bounds.top);
-    } else if (bounds.bottom > windowHeight) {
-      scroller.scrollTop += (bounds.bottom - windowHeight);
+    if (!!bounds.top && !!bounds.bottom) {
+      if (bounds.top < headerHeight) {
+        scroller.scrollTop -= (headerHeight - bounds.top);
+      } else if (bounds.bottom > windowHeight) {
+        scroller.scrollTop += (bounds.bottom - windowHeight);
+      }
     }
   }
 
