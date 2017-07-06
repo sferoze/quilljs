@@ -61,7 +61,7 @@ class Clipboard extends Module {
     this.container.addEventListener('focus', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (this.scrollTop) {
+      if (this.scrollTop || this.scrollTop === 0) {
         this.quill.scrollingContainer.scrollTop = this.scrollTop
       }
       return false;
@@ -69,7 +69,7 @@ class Clipboard extends Module {
     this.container.addEventListener('scroll', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (this.scrollTop) {
+      if (this.scrollTop || this.scrollTop === 0) {
         this.quill.scrollingContainer.scrollTop = this.scrollTop
       }
       return false;
