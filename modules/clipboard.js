@@ -77,8 +77,9 @@ class Clipboard extends Module {
     this.container.setAttribute('contenteditable', true);
     this.container.setAttribute('tabindex', -1);
     this.matchers = [];
-    CLIPBOARD_CONFIG.concat(this.options.matchers).forEach((pair) => {
-      this.addMatcher(...pair);
+    CLIPBOARD_CONFIG.concat(this.options.matchers).forEach(([selector, matcher]) => {
+      if (!options.matchVisual && matcher === matchSpacing) return;
+      this.addMatcher(selector, matcher);
     });
   }
 
@@ -117,15 +118,15 @@ class Clipboard extends Module {
     let scrollTop = this.quill.scrollingContainer.scrollTop;
     this.scrollTop = scrollTop;
     this.container.focus();
+    this.quill.selection.update(Quill.sources.SILENT);
     setTimeout(() => {
-      this.quill.selection.update(Quill.sources.SILENT);
       delta = delta.concat(this.convert()).delete(range.length);
       this.quill.updateContents(delta, Quill.sources.USER);
       // range.length contributes to delta.length()
       this.quill.setSelection(delta.length() - range.length, Quill.sources.SILENT);
       this.quill.scrollingContainer.scrollTop = scrollTop;
       this.scrollTop = null;
-      this.quill.selection.scrollIntoView();
+      this.quill.focus();
     }, 1);
   }
 
@@ -153,7 +154,8 @@ class Clipboard extends Module {
   }
 }
 Clipboard.DEFAULTS = {
-  matchers: []
+  matchers: [],
+  matchVisual: true
 };
 
 

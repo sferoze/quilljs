@@ -1,6 +1,7 @@
 import clone from 'clone';
 import equal from 'deep-equal';
 import extend from 'extend';
+import Delta from 'quill-delta';
 import DeltaOp from 'quill-delta/lib/op';
 import Parchment from 'parchment';
 import Quill from '../core/quill';
@@ -27,6 +28,11 @@ class Keyboard extends Module {
     super(quill, options);
     this.bindings = {};
     Object.keys(this.options.bindings).forEach((name) => {
+      if (name === 'list autofill' &&
+          quill.scroll.whitelist != null &&
+          !quill.scroll.whitelist['list']) {
+        return;
+      }
       if (this.options.bindings[name]) {
         this.addBinding(this.options.bindings[name]);
       }
@@ -188,11 +194,13 @@ Keyboard.DEFAULTS = {
     },
     'tab': {
       key: Keyboard.keys.TAB,
-      handler: function(range, context) {
-        if (!context.collapsed) {
-          this.quill.scroll.deleteAt(range.index, range.length);
-        }
-        this.quill.insertText(range.index, '\t', Quill.sources.USER);
+      handler: function(range) {
+        this.quill.history.cutoff();
+        let delta = new Delta().retain(range.index)
+                               .delete(range.length)
+                               .insert('\t');
+        this.quill.updateContents(delta, Quill.sources.USER);
+        this.quill.history.cutoff();
         this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
       }
     },
@@ -213,12 +221,14 @@ Keyboard.DEFAULTS = {
       collapsed: true,
       format: { list: 'checked' },
       handler: function(range) {
-        this.quill.scroll.insertAt(range.index, '\n');
-        let [line, ] = this.quill.getLine(range.index + 1);
-        line.format('list', 'unchecked');
-        this.quill.update(Quill.sources.USER);
+        let [line, offset] = this.quill.getLine(range.index);
+        let delta = new Delta().retain(range.index)
+                               .insert('\n', { list: 'checked' })
+                               .retain(line.length() - offset - 1)
+                               .retain(1, { list: 'unchecked' });
+        this.quill.updateContents(delta, Quill.sources.USER);
         this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
-        this.quill.selection.scrollIntoView();
+        this.quill.scrollIntoView();
       }
     },
     'header enter': {
@@ -226,11 +236,15 @@ Keyboard.DEFAULTS = {
       collapsed: true,
       format: ['header'],
       suffix: /^$/,
-      handler: function(range) {
-        this.quill.scroll.insertAt(range.index, '\n');
-        this.quill.formatText(range.index + 1, 1, 'header', false, Quill.sources.USER);
+      handler: function(range, context) {
+        let [line, offset] = this.quill.getLine(range.index);
+        let delta = new Delta().retain(range.index)
+                               .insert('\n', { header: context.format.header })
+                               .retain(line.length() - offset - 1)
+                               .retain(1, { header: null });
+        this.quill.updateContents(delta, Quill.sources.USER);
         this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
-        this.quill.selection.scrollIntoView();
+        this.quill.scrollIntoView();
       }
     },
     'list autofill': {
@@ -239,7 +253,6 @@ Keyboard.DEFAULTS = {
       format: { list: false },
       prefix: /^\s*?(1\.|-|\[ ?\]|\[x\])$/,
       handler: function(range, context) {
-        if (this.quill.scroll.whitelist != null && !this.quill.scroll.whitelist['list']) return true;
         let length = context.prefix.length;
         let value;
         switch (context.prefix.trim()) {
@@ -255,8 +268,15 @@ Keyboard.DEFAULTS = {
           default:
             value = 'ordered';
         }
-        this.quill.scroll.deleteAt(range.index - length, length);
-        this.quill.formatLine(range.index - length, 1, 'list', value, Quill.sources.USER);
+        this.quill.insertText(range.index, ' ', Quill.sources.USER);
+        this.quill.history.cutoff();
+        let [line, offset] = this.quill.getLine(range.index + 1);
+        let delta = new Delta().retain(range.index + 1 - offset)
+                               .delete(length + 1)
+                               .retain(line.length() - 1 - offset)
+                               .retain(1, { list: value });
+        this.quill.updateContents(delta, Quill.sources.USER);
+        this.quill.history.cutoff();
         this.quill.setSelection(range.index - length, Quill.sources.SILENT);
       }
     },
@@ -293,7 +313,7 @@ function handleBackspace(range, context) {
   if (Object.keys(formats).length > 0) {
     this.quill.formatLine(range.index-length, length, formats, Quill.sources.USER);
   }
-  this.quill.selection.scrollIntoView();
+  this.quill.focus();
 }
 
 function handleDelete(range, context) {
@@ -318,9 +338,19 @@ function handleDelete(range, context) {
 }
 
 function handleDeleteRange(range) {
+  let lines = this.quill.getLines(range);
+  let formats = {};
+  if (lines.length > 1) {
+    let firstFormats = lines[0].formats();
+    let lastFormats = lines[lines.length - 1].formats();
+    formats = DeltaOp.attributes.diff(lastFormats, firstFormats) || {};
+  }
   this.quill.deleteText(range, Quill.sources.USER);
+  if (Object.keys(formats).length > 0) {
+    this.quill.formatLine(range.index, 1, formats, Quill.sources.USER);
+  }
   this.quill.setSelection(range.index, Quill.sources.SILENT);
-  this.quill.selection.scrollIntoView();
+  this.quill.focus();
 }
 
 function handleEnter(range, context) {
@@ -337,7 +367,7 @@ function handleEnter(range, context) {
   // Earlier scroll.deleteAt might have messed up our selection,
   // so insertText's built in selection preservation is not reliable
   this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
-  this.quill.selection.scrollIntoView();
+  this.quill.focus();
   Object.keys(context.format).forEach((name) => {
     if (lineFormats[name] != null) return;
     if (Array.isArray(context.format[name])) return;

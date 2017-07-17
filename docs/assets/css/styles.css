@@ -924,6 +924,9 @@ body.home .arrow .shaft {
 #demo-container .ql-editor li {
   margin-bottom: 0;
 }
+#demo-container .ql-editor pre {
+  font-size: 0.8em;
+}
 
 /*** Docs ***/
 
@@ -1462,6 +1465,10 @@ body:not(.home) .navbar-link:before {
   }
   #features-container {
     margin-bottom: 10em;
+  }
+  #features-container #github-wrapper {
+    margin-left: -10em;
+    width: 20em;
   }
   #docs-wrapper {
     position: inherit;
