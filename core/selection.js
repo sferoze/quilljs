@@ -228,7 +228,7 @@ class Selection {
     }
     if (first == null || last == null) return;
     let scroller = this.scroll.scrollingContainer;
-    //let scrollBounds = scroller.getBoundingClientRect();
+    // let scrollBounds = scroller.getBoundingClientRect();
     let headerHeight = 65;
     let windowHeight = window.innerHeight - 20;
     if (!!bounds.top && !!bounds.bottom) {
