@@ -72,7 +72,7 @@ class InlineEmbed extends Embed {
       if (mutation.type === 'characterData' &&
           (mutation.target === this.leftGuard || mutation.target === this.rightGuard)) {
         let range = this.restore(mutation.target);
-        if (range) context.range = range;
+        if (range && context) context.range = range;
       }
     });
   }
