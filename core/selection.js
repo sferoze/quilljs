@@ -38,19 +38,19 @@ class Selection {
     this.cursor = Parchment.create('cursor', this);
     // savedRange is last non-null range
     this.lastRange = this.savedRange = new Range(0, 0);
-    this.root.addEventListener('click', (e) => {
-      const blot = Parchment.find(e.target, true);
-      const selectedNode = document.querySelector('.ql-embed-selected');
-      if (selectedNode) {
-        selectedNode.classList.remove('ql-embed-selected');
-      }
-      if (blot instanceof Parchment.Embed) {
-        blot.domNode.classList.add('ql-embed-selected');
-        const range = new Range(blot.offset(scroll), blot.length());
-        this.setRange(range, Emitter.sources.USER);
-        e.stopPropagation();
-      }
-    });
+    // this.root.addEventListener('click', (e) => {
+    //   const blot = Parchment.find(e.target, true);
+    //   const selectedNode = document.querySelector('.ql-embed-selected');
+    //   if (selectedNode) {
+    //     selectedNode.classList.remove('ql-embed-selected');
+    //   }
+    //   if (blot instanceof Parchment.Embed) {
+    //     blot.domNode.classList.add('ql-embed-selected');
+    //     const range = new Range(blot.offset(scroll), blot.length());
+    //     this.setRange(range, Emitter.sources.USER);
+    //     e.stopPropagation();
+    //   }
+    // });
     this.emitter.listenDOM('selectionchange', document, () => {
       setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
     });
@@ -276,7 +276,7 @@ class Selection {
     // let scrollBounds = scroller.getBoundingClientRect();
     let headerHeight = 65;
     let windowHeight = window.innerHeight - 20;
-    if (!!bounds.top && !!bounds.bottom) {
+    if (!!bounds.top && !!bounds.bottom && !!scroller) {
       if (bounds.top < headerHeight) {
         scroller.scrollTop -= (headerHeight - bounds.top);
       } else if (bounds.bottom > windowHeight) {
