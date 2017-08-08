@@ -169,13 +169,11 @@ Keyboard.DEFAULTS = {
       metaKey: null,
       ctrlKey: null,
       altKey: null,
-      format: ['blockquote', 'indent', 'list'],
+      format: ['indent', 'list'],
       offset: 0,
       handler: function(range, context) {
         if (context.format.indent != null) {
           this.quill.format('indent', '-1', Quill.sources.USER);
-        } else if (context.format.blockquote != null) {
-          this.quill.format('blockquote', false, Quill.sources.USER);
         } else if (context.format.list != null) {
           this.quill.format('list', false, Quill.sources.USER);
         }
@@ -239,7 +237,7 @@ Keyboard.DEFAULTS = {
       handler: function(range, context) {
         let [line, offset] = this.quill.getLine(range.index);
         let delta = new Delta().retain(range.index)
-                               .insert('\n', { header: context.format.header })
+                               .insert('\n', context.format)
                                .retain(line.length() - offset - 1)
                                .retain(1, { header: null });
         this.quill.updateContents(delta, Quill.sources.USER);

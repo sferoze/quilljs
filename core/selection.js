@@ -1,5 +1,5 @@
 import Parchment from 'parchment';
-import { InlineEmbed } from '../blots/embed';
+import Embed from '../blots/embed';
 import clone from 'clone';
 import equal from 'deep-equal';
 import Emitter from './emitter';
@@ -38,21 +38,35 @@ class Selection {
     this.cursor = Parchment.create('cursor', this);
     // savedRange is last non-null range
     this.lastRange = this.savedRange = new Range(0, 0);
-    // this.root.addEventListener('click', (e) => {
-    //   const blot = Parchment.find(e.target, true);
-    //   const selectedNode = document.querySelector('.ql-embed-selected');
-    //   if (selectedNode) {
-    //     selectedNode.classList.remove('ql-embed-selected');
-    //   }
-    //   if (blot instanceof Parchment.Embed) {
-    //     blot.domNode.classList.add('ql-embed-selected');
-    //     const range = new Range(blot.offset(scroll), blot.length());
-    //     this.setRange(range, Emitter.sources.USER);
-    //     e.stopPropagation();
-    //   }
-    // });
+
+    this.root.addEventListener('click', (e) => {
+      const blot = Parchment.find(e.target, true);
+      const selectedNode = document.querySelector('.ql-embed-selected');
+      if (selectedNode) {
+        selectedNode.classList.remove('ql-embed-selected');
+      }
+      if (blot instanceof Parchment.Embed) {
+        blot.domNode.classList.add('ql-embed-selected');
+        const range = new Range(blot.offset(scroll), blot.length());
+        this.setRange(range, Emitter.sources.USER);
+        e.stopPropagation();
+      }
+    });
+    let mouseCount = 0;
+    this.emitter.listenDOM('mousedown', document.body, () => {
+      mouseCount += 1;
+    });
+    this.emitter.listenDOM('mouseup', document.body, () => {
+      mouseCount -= 1;
+      if (mouseCount === 0) {
+        this.update(Emitter.sources.USER);
+      }
+    });
+
     this.emitter.listenDOM('selectionchange', document, () => {
-      setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
+      if (mouseCount === 0) {
+        setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
+      }
     });
     this.emitter.on(Emitter.events.EDITOR_CHANGE, (type, delta) => {
       if (type === Emitter.events.TEXT_CHANGE && delta.length() > 0) {
@@ -84,7 +98,7 @@ class Selection {
     if (native == null) return;
     const [start, end] = [native.start, native.end].map(function(pos) {
       const blot = Parchment.find(pos.node, true);
-      if (blot instanceof InlineEmbed) {
+      if (blot instanceof Embed) {
         let node, offset;
         if (pos.node === blot.leftGuard && pos.offset === 1) {
           [node, offset] = blot.position(blot.length());

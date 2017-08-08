@@ -14,9 +14,9 @@ redirect_from:
 </style>
 <!-- head -->
 
-To provide a consistent editing experience, you need consistent both data and predictable behaviors. The DOM is unfortunately lacking on both of these to be a high quality data store. The solution for modern editors is to maintain its own document model to represent its contents. [Parchment](https://github.com/quilljs/parchment/) is that solution for Quill. It is organized in its own codebase with its own API layer. Through Parchment, you can customize the content and formats Quill recognizes, or add entirely new ones.
+To provide a consistent editing experience, you need both consistent data and predictable behaviors. The DOM unfortunately lacks both of these. The solution for modern editors is to maintain their own document model to represent their contents. [Parchment](https://github.com/quilljs/parchment/) is that solution for Quill. It is organized in its own codebase with its own API layer. Through Parchment you can customize the content and formats Quill recognizes, or add entirely new ones.
 
-In this guide, we will use the building blocks provided by Parchment and Quill to replicate the editor on Medium. We will to start with the bare bones of Quill, without any themes, extraneous modules, or formats. At this basic level, Quill only understand plain text. But by the end of this guide, links, videos, and even Tweets will be understood.
+In this guide, we will use the building blocks provided by Parchment and Quill to replicate the editor on Medium. We will start with the bare bones of Quill, without any themes, extraneous modules, or formats. At this basic level, Quill only understands plain text. But by the end of this guide, links, videos, and even tweets will be understood.
 
 
 ### Groundwork
@@ -304,7 +304,7 @@ TweetBlot.className = 'tweet';
 
 ### Final Polish
 
-We began with just a bunch of buttons and a Quill core that just understands plaintext. With Parchment, we able able to add bold, italic, links, blockquotes, headers, section dividers, images, videos, and even Tweets. All of this comes while maintaining a predictable and consistent document, allowing us to use Quill's powerful [APIs](/docs/api/) with these new formats and content.
+We began with just a bunch of buttons and a Quill core that just understands plaintext. With Parchment, we are able to add bold, italic, links, blockquotes, headers, section dividers, images, videos, and even Tweets. All of this comes while maintaining a predictable and consistent document, allowing us to use Quill's powerful [APIs](/docs/api/) with these new formats and content.
 
 Let's add some final polish to finish off our demo. It won't compare to Medium's UI, but we'll try to get close.
 
