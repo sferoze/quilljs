@@ -4,6 +4,7 @@ import extend from 'extend';
 import Delta from 'quill-delta';
 import DeltaOp from 'quill-delta/lib/op';
 import Parchment from 'parchment';
+import Embed from '../blots/embed';
 import Quill from '../core/quill';
 import logger from '../core/logger';
 import Module from '../core/module';
@@ -169,13 +170,11 @@ Keyboard.DEFAULTS = {
       metaKey: null,
       ctrlKey: null,
       altKey: null,
-      format: ['blockquote', 'indent', 'list'],
+      format: ['indent', 'list'],
       offset: 0,
       handler: function(range, context) {
         if (context.format.indent != null) {
           this.quill.format('indent', '-1', Quill.sources.USER);
-        } else if (context.format.blockquote != null) {
-          this.quill.format('blockquote', false, Quill.sources.USER);
         } else if (context.format.list != null) {
           this.quill.format('list', false, Quill.sources.USER);
         }
@@ -239,7 +238,7 @@ Keyboard.DEFAULTS = {
       handler: function(range, context) {
         let [line, offset] = this.quill.getLine(range.index);
         let delta = new Delta().retain(range.index)
-                               .insert('\n', { header: context.format.header })
+                               .insert('\n', context.format)
                                .retain(line.length() - offset - 1)
                                .retain(1, { header: null });
         this.quill.updateContents(delta, Quill.sources.USER);
@@ -287,12 +286,51 @@ Keyboard.DEFAULTS = {
       prefix: /\n\n$/,
       suffix: /^\s+$/,
       handler: function(range) {
-        this.quill.format('code-block', false, Quill.sources.USER);
-        this.quill.deleteText(range.index - 2, 1, Quill.sources.USER);
+        const [line, offset] = this.quill.getLine(range.index);
+        const delta = new Delta()
+          .retain(range.index + line.length() - offset - 2)
+          .retain(1, { 'code-block': null })
+          .delete(1);
+        this.quill.updateContents(delta, Quill.sources.USER);
       }
-    }
+    },
+    'embed left': makeEmbedArrowHandler(Keyboard.keys.LEFT, false),
+    'embed left shift': makeEmbedArrowHandler(Keyboard.keys.LEFT, true),
+    'embed right': makeEmbedArrowHandler(Keyboard.keys.RIGHT, false),
+    'embed right shift': makeEmbedArrowHandler(Keyboard.keys.RIGHT, true)
   }
 };
+
+function makeEmbedArrowHandler(key, shiftKey) {
+  const where = key === Keyboard.keys.LEFT ? 'prefix' : 'suffix';
+  return {
+    key,
+    shiftKey,
+    [where]: /^$/,
+    handler: function(range) {
+      let index = range.index;
+      if (key === Keyboard.keys.RIGHT) {
+        index += (range.length + 1);
+      }
+      const [leaf, ] = this.quill.getLeaf(index);
+      if (!(leaf instanceof Embed)) return true;
+      if (key === Keyboard.keys.LEFT) {
+        if (shiftKey) {
+          this.quill.setSelection(range.index - 1, range.length + 1, Quill.sources.USER);
+        } else {
+          this.quill.setSelection(range.index - 1, Quill.sources.USER);
+        }
+      } else {
+        if (shiftKey) {
+          this.quill.setSelection(range.index, range.length + 1, Quill.sources.USER);
+        } else {
+          this.quill.setSelection(range.index + range.length + 1, Quill.sources.USER);
+        }
+      }
+      return false;
+    }
+  };
+}
 
 
 function handleBackspace(range, context) {
