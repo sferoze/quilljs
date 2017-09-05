@@ -28,6 +28,29 @@ class Selection {
     this.handleComposition();
     this.handleDragging();
     this.handleEmbedSelection();
+    this.root.addEventListener('click', (e) => {
+      const blot = Parchment.find(e.target, true);
+      const selectedNode = document.querySelector('.ql-embed-selected');
+      if (selectedNode) {
+        selectedNode.classList.remove('ql-embed-selected');
+      }
+      if (blot instanceof Parchment.Embed) {
+        blot.domNode.classList.add('ql-embed-selected');
+        const range = new Range(blot.offset(scroll), blot.length());
+        this.setRange(range, Emitter.sources.USER);
+        e.stopPropagation();
+      }
+    });
+    let mouseCount = 0;
+    this.emitter.listenDOM('mousedown', document.body, () => {
+      mouseCount += 1;
+    });
+    this.emitter.listenDOM('mouseup', document.body, () => {
+      mouseCount -= 1;
+      if (mouseCount === 0) {
+        this.update(Emitter.sources.USER);
+      }
+    });
     this.emitter.listenDOM('selectionchange', document, () => {
       if (!this.mouseDown) {
         setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
