@@ -1,5 +1,4 @@
 import Parchment from 'parchment';
-import Embed from '../blots/embed';
 import clone from 'clone';
 import equal from 'deep-equal';
 import Emitter from './emitter';
@@ -21,23 +20,12 @@ class Selection {
     this.emitter = emitter;
     this.scroll = scroll;
     this.composing = false;
+    this.mouseDown = false;
     this.root = this.scroll.domNode;
-    this.root.addEventListener('compositionstart', () => {
-      this.composing = true;
-    });
-    this.root.addEventListener('compositionend', () => {
-      this.composing = false;
-      if (this.cursor.parent) {
-        const range = this.cursor.restore();
-        if (!range) return;
-        setTimeout(() => {
-          this.setNativeRange(range.startNode, range.startOffset, range.endNode, range.endOffset);
-        }, 1);
-      }
-    });
     this.cursor = Parchment.create('cursor', this);
     // savedRange is last non-null range
     this.lastRange = this.savedRange = new Range(0, 0);
+<<<<<<< HEAD
 
     this.root.addEventListener('click', (e) => {
       const blot = Parchment.find(e.target, true);
@@ -63,8 +51,12 @@ class Selection {
       }
     });
 
+=======
+    this.handleComposition();
+    this.handleDragging();
+>>>>>>> master
     this.emitter.listenDOM('selectionchange', document, () => {
-      if (mouseCount === 0) {
+      if (!this.mouseDown) {
         setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
       }
     });
@@ -94,25 +86,30 @@ class Selection {
     this.update(Emitter.sources.SILENT);
   }
 
-  fixInlineEmbed(native) {
-    if (native == null) return;
-    const [start, end] = [native.start, native.end].map(function(pos) {
-      const blot = Parchment.find(pos.node, true);
-      if (blot instanceof Embed) {
-        let node, offset;
-        if (pos.node === blot.leftGuard && pos.offset === 1) {
-          [node, offset] = blot.position(blot.length());
-          return { node, offset };
-        } else if (pos.node === blot.rightGuard && pos.offset === 0) {
-          [node, offset] = blot.position(0);
-          return { node, offset };
-        }
-      }
-      return pos;
+  handleComposition() {
+    this.root.addEventListener('compositionstart', () => {
+      this.composing = true;
     });
-    if (native.start !== start || native.end !== end) {
-      this.setNativeRange(start.node, start.offset, end.node, end.offset);
-    }
+    this.root.addEventListener('compositionend', () => {
+      this.composing = false;
+      if (this.cursor.parent) {
+        const range = this.cursor.restore();
+        if (!range) return;
+        setTimeout(() => {
+          this.setNativeRange(range.startNode, range.startOffset, range.endNode, range.endOffset);
+        }, 1);
+      }
+    });
+  }
+
+  handleDragging() {
+    this.emitter.listenDOM('mousedown', document.body, () => {
+      this.mouseDown = true;
+    });
+    this.emitter.listenDOM('mouseup', document.body, () => {
+      this.mouseDown = false;
+      this.update(Emitter.sources.USER);
+    });
   }
 
   focus() {
@@ -354,7 +351,6 @@ class Selection {
   update(source = Emitter.sources.USER) {
     let oldRange = this.lastRange;
     let [lastRange, nativeRange] = this.getRange();
-    this.fixInlineEmbed(nativeRange);
     this.lastRange = lastRange;
     if (this.lastRange != null) {
       this.savedRange = this.lastRange;

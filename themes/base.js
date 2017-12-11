@@ -45,7 +45,7 @@ class BaseTheme extends Theme {
         });
       }
     };
-    document.body.addEventListener('click', listener);
+    quill.emitter.listenDOM('click', document.body, listener);
   }
 
   addModule(name) {
@@ -135,6 +135,7 @@ BaseTheme.DEFAULTS = extend(true, {}, Theme.DEFAULTS, {
                     .delete(range.length)
                     .insert({ image: e.target.result })
                   , Emitter.sources.USER);
+                  this.quill.setSelection(range.index + 1, Emitter.sources.SILENT);
                   fileInput.value = "";
                 }
                 reader.readAsDataURL(fileInput.files[0]);
