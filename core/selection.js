@@ -25,7 +25,6 @@ class Selection {
     this.cursor = Parchment.create('cursor', this);
     // savedRange is last non-null range
     this.lastRange = this.savedRange = new Range(0, 0);
-<<<<<<< HEAD
 
     this.root.addEventListener('click', (e) => {
       const blot = Parchment.find(e.target, true);
@@ -51,10 +50,9 @@ class Selection {
       }
     });
 
-=======
     this.handleComposition();
     this.handleDragging();
->>>>>>> master
+
     this.emitter.listenDOM('selectionchange', document, () => {
       if (!this.mouseDown) {
         setTimeout(this.update.bind(this, Emitter.sources.USER), 1);
