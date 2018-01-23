@@ -1,7 +1,7 @@
 ---
 layout: v0.20
 permalink: /0.20/docs/events/
-title: Events - Quill
+title: Events - Quill v0.20
 ---
 <div class="container">
   <div id="sidebar-dropdown">
@@ -257,7 +257,5 @@ title: Events - Quill
     </div>
   </div>
 </div>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js" type=
-"text/javascript"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"
-type="text/javascript"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>

@@ -1,7 +1,7 @@
 ---
 layout: v0.20
 permalink: /0.20/docs/modules/multi-cursors/
-title: Cursors Module - Quill
+title: Cursors Module - Quill v0.20
 ---
 <div class="container">
   <div id="sidebar-dropdown">
@@ -191,10 +191,8 @@ title: Cursors Module - Quill
     </div>
   </div>
 </div>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js" type=
-"text/javascript"></script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"
-type="text/javascript"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 <script src="//cdn.quilljs.com/0.20.1/quill.js"></script>
 <script>
 var editor = new Quill('#multi-cursor-editor');

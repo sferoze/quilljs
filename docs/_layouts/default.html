@@ -1,7 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>{{ page.title }}{% if page.path != "index.html" %} - Quill{% endif %}</title>
+    {% if page.path == "index.html" %}
+    <title>{{ page.title }}</title>
+    {% elsif page.title.size > 25 %}
+    <title>{{ page.title }} - Quill</title>
+    {% else %}
+    <title>{{ page.title }} - Quill Rich Text Editor</title>
+    {% endif %}
     {% include meta.html %}
     <link rel="stylesheet" href="/assets/css/base.css">
     {% assign sections = content | split: '<!-- head -->' %}
@@ -34,7 +40,7 @@
       {% endif %}
     {% endfor %}
     {% include footer.html %}
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
     {% assign sections = content | split: '<!-- script -->' %}
     {% for section in sections %}
       {% assign mod = forloop.index | modulo: 2 %}
@@ -42,7 +48,7 @@
         {{ section | strip }}
       {% endif %}
     {% endfor %}
-    <script type="text/javascript">
+    <script>
     $(document).ready(function() {
       $('.navbar-open').click(function() {
         $('.navbar-drop').addClass('active');
@@ -61,6 +67,5 @@
       }
     });
     </script>
-    </div>
   </body>
 </html>

@@ -1,7 +1,7 @@
 ---
 layout: v0.20
 permalink: /0.20/docs/modules/authorship/
-title: Authorship Module - Quill
+title: Authorship Module - Quill v0.20
 ---
 <div class="container">
   <div id="sidebar-dropdown">
@@ -208,9 +208,9 @@ title: Authorship Module - Quill
     </div>
   </div>
 </div>
-<script type="text/javascript" src="//cdn.quilljs.com/0.20.1/quill.js"></script>
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="//cdn.quilljs.com/0.20.1/quill.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 <script>
 var editor = new Quill('#authorship-editor');
 
