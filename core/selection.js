@@ -270,6 +270,7 @@ class Selection {
   }
 
   scrollIntoView(scrollingContainer) {
+    if (!!window.Mobile) return;
     let range = this.lastRange;
     if (range == null) return;
     let bounds = this.getBounds(range.index, range.length);
