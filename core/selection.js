@@ -36,7 +36,7 @@ class Selection {
         blot.domNode.classList.add('ql-embed-selected');
         const range = new Range(blot.offset(scroll), blot.length());
         this.setRange(range, Emitter.sources.USER);
-        //e.stopPropagation();
+        // e.stopPropagation();
       }
     });
     let mouseCount = 0;
@@ -270,7 +270,7 @@ class Selection {
   }
 
   scrollIntoView(scrollingContainer) {
-    if (!!window.Mobile) return;
+    if (window.Mobile) return;
     let range = this.lastRange;
     if (range == null) return;
     let bounds = this.getBounds(range.index, range.length);
@@ -282,15 +282,15 @@ class Selection {
       [last, ] = this.scroll.line(Math.min(range.index + range.length, limit));
     }
     if (first == null || last == null) return;
-    let scroller = this.scroll.scrollingContainer;
+    // let scroller = scrollingContainer;
     // let scrollBounds = scroller.getBoundingClientRect();
     let headerHeight = 65;
     let windowHeight = window.innerHeight - 20;
-    if (!!bounds.top && !!bounds.bottom && !!scroller) {
+    if (bounds.top && bounds.bottom && scrollingContainer) {
       if (bounds.top < headerHeight) {
-        scroller.scrollTop -= (headerHeight - bounds.top);
+        scrollingContainer.scrollTop -= (headerHeight - bounds.top);
       } else if (bounds.bottom > windowHeight) {
-        scroller.scrollTop += (bounds.bottom - windowHeight);
+        scrollingContainer.scrollTop += (bounds.bottom - windowHeight);
       }
     }
   }

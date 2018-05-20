@@ -36,6 +36,7 @@
     "deep-equal": "^1.0.1",
     "eventemitter3": "^2.0.3",
     "extend": "^3.0.1",
+    "npm": "^6.0.1",
     "parchment": "^1.1.4",
     "quill-delta": "^3.6.2"
   },
@@ -62,12 +63,12 @@
     "stylus": "~0.54.5",
     "stylus-loader": "^3.0.1",
     "ts-loader": "^3.0.3",
-    "typescript": "^2.5.3",
+    "typescript": "^2.8.3",
     "wdio-jasmine-framework": "~0.3.2",
     "wdio-spec-reporter": "~0.1.2",
     "webdriver-manager": "^12.0.6",
     "webdriverio": "^4.8.0",
-    "webpack": "^3.10.0",
+    "webpack": "^3.12.0",
     "webpack-dev-server": "^2.9.2"
   },
   "license": "BSD-3-Clause",
