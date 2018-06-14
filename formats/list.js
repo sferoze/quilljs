@@ -64,9 +64,9 @@ class List extends Container {
   constructor(domNode) {
     super(domNode);
     const listEventHandler = (e) => {
+      if (e.target.parentNode !== domNode) return;
       e.preventDefault();
       e.stopPropagation();
-      if (e.target.parentNode !== domNode) return;
       let format = this.statics.formats(domNode);
       let blot = Parchment.find(e.target);
       if (format === 'checked') {
