@@ -65,13 +65,15 @@ class List extends Container {
     super(domNode);
     const listEventHandler = (e) => {
       if (e.target.parentNode !== domNode) return;
-      e.preventDefault();
-      e.stopPropagation();
       let format = this.statics.formats(domNode);
       let blot = Parchment.find(e.target);
       if (format === 'checked') {
+        e.preventDefault();
+        e.stopPropagation();
         blot.format('list', 'unchecked');
       } else if(format === 'unchecked') {
+        e.preventDefault();
+        e.stopPropagation();
         blot.format('list', 'checked');
       }
     }
