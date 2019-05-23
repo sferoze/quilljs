@@ -108,4 +108,195 @@ Quill.register(
   true,
 );
 
+let History = Quill.import('modules/history');
+
+class HistoryExtension extends History {
+  constructor(quill, options) {
+    super(quill, options);
+  }
+  redoSilent() {
+    this.changeSilent('redo', 'undo');
+  }
+  undoSilent() {
+    this.changeSilent('undo', 'redo');
+  }
+  changeSilent(source, dest) {
+    if (this.stack[source].length === 0) return;
+    const delta = this.stack[source].pop();
+    const base = this.quill.getContents();
+    const inverseDelta = delta.invert(base);
+    this.stack[dest].push(inverseDelta);
+    this.lastRecorded = 0;
+    this.ignoreChange = true;
+    this.quill.updateContents(delta, Quill.sources.SILENT);
+    this.ignoreChange = false;
+  }
+}
+
+Quill.register('modules/history', HistoryExtension, true);
+
+var BlockEmbed = Quill.import('formats/image');
+var MediaEmbed = Quill.import('blots/block/embed');
+const ImageFormatAttributesList = [
+    'alt',
+    'height',
+    'width',
+    'style'
+];
+
+const AVMediaAttributesList = [
+    'alt',
+    'height',
+    'width',
+    'style',
+    'mimeType',
+    'controls',
+    'data-setup',
+    'type'
+];
+
+class VideoEmbedBlot extends MediaEmbed {
+  static create(value) {
+    let node = super.create();
+    if (value.url) {
+      node.setAttribute('src', value.url);
+    } else if (typeof value === 'string') {
+      node.setAttribute('src', value);
+    }
+    node.setAttribute('controls', 'controls');
+    node.setAttribute('data-setup', '{}');
+    return node;
+  }
+  static formats(domNode) {
+    return AVMediaAttributesList.reduce(function(formats, attribute) {
+      if (domNode.hasAttribute(attribute)) {
+        formats[attribute] = domNode.getAttribute(attribute);
+      }
+      return formats;
+    }, {});
+  }
+  format(name, value) {
+    if (AVMediaAttributesList.indexOf(name) > -1) {
+      if (value) {
+        this.domNode.setAttribute(name, value);
+      } else {
+        this.domNode.removeAttribute(name);
+      }
+    } else {
+      super.format(name, value);
+    }
+  }
+  static value(node) {
+    var url = 'false';
+    if (node) {
+      url = node.getAttribute('src');
+    }
+    return url;
+  }
+}
+
+VideoEmbedBlot.blotName = 'videoEmbed';
+VideoEmbedBlot.className = 'ql-embed-video';
+VideoEmbedBlot.tagName = 'VIDEO';
+
+Quill.register({'formats/videoEmbed': VideoEmbedBlot}, true);
+
+class AudioEmbedBlot extends MediaEmbed {
+  static create(value) {
+    let node = super.create();
+    if (value.url) {
+      node.setAttribute('src', value.url);
+    } else if (typeof value === 'string') {
+      node.setAttribute('src', value);
+    }
+    node.setAttribute('controls', 'controls');
+    node.setAttribute('data-setup', '{}');
+    return node;
+  }
+  static formats(domNode) {
+    return AVMediaAttributesList.reduce(function(formats, attribute) {
+      if (domNode.hasAttribute(attribute)) {
+        formats[attribute] = domNode.getAttribute(attribute);
+      }
+      return formats;
+    }, {});
+  }
+  format(name, value) {
+    if (AVMediaAttributesList.indexOf(name) > -1) {
+      if (value) {
+        this.domNode.setAttribute(name, value);
+      } else {
+        this.domNode.removeAttribute(name);
+      }
+    } else {
+      super.format(name, value);
+    }
+  }
+  static value(node) {
+    var url = 'false';
+    if (node) {
+      url = node.getAttribute('src');
+    }
+    return url;
+  }
+}
+
+AudioEmbedBlot.blotName = 'audioEmbed';
+AudioEmbedBlot.tagName = 'AUDIO';
+AudioEmbedBlot.className = 'ql-embed-audio';
+
+Quill.register({'formats/audioEmbed': AudioEmbedBlot}, true);
+
+class ImageBlot extends BlockEmbed {
+  static create(value) {
+    let node = super.create();
+    if (value.url) {
+      node.setAttribute('src', FormatImageHandlerUrl(value.url));
+    } else if (typeof value === 'string') {
+      node.setAttribute('src', FormatImageHandlerUrl(value));
+    }
+    return node;
+  }
+  static formats(domNode) {
+    return ImageFormatAttributesList.reduce(function(formats, attribute) {
+      if (domNode.hasAttribute(attribute)) {
+        formats[attribute] = domNode.getAttribute(attribute);
+      }
+      return formats;
+    }, {});
+  }
+  format(name, value) {
+    if (ImageFormatAttributesList.indexOf(name) > -1) {
+      if (value) {
+        this.domNode.setAttribute(name, value);
+      } else {
+        this.domNode.removeAttribute(name);
+      }
+    } else {
+      super.format(name, value);
+    }
+  }
+  static value(node) {
+    var url = 'false';
+    if (node) {
+      url = node.getAttribute('src');
+    }
+    return url;
+  }
+}
+
+ImageBlot.blotName = 'image';
+ImageBlot.tagName = 'img';
+
+Quill.register(ImageBlot, true);
+
+// Currently grammarly is disabled in Quill by default.
+// Code below is incase grammarly gets accidently enabled again
+let Inline = Quill.import('blots/inline');
+class GrammarlyInline extends Inline {}
+GrammarlyInline.tagName = 'G';
+GrammarlyInline.blotName = 'grammarly-inline';
+GrammarlyInline.className = 'gr_';
+Quill.register(GrammarlyInline);
+
 export default Quill;
