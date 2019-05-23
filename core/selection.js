@@ -294,13 +294,13 @@ class Selection {
       [last] = this.scroll.line(Math.min(range.index + range.length, limit));
     }
     if (first == null || last == null) return;
-    let headerHeight = 52;
-    let windowHeight = window.innerHeight - 20;
+    const headerHeight = 52;
+    const windowHeight = window.innerHeight - 20;
     if (bounds.top && bounds.bottom && scrollingContainer) {
       if (bounds.top < headerHeight) {
-        scrollingContainer.scrollTop -= (headerHeight - bounds.top);
+        scrollingContainer.scrollTop -= headerHeight - bounds.top;
       } else if (bounds.bottom > windowHeight) {
-        scrollingContainer.scrollTop += (bounds.bottom - windowHeight);
+        scrollingContainer.scrollTop += bounds.bottom - windowHeight;
       }
     }
   }
