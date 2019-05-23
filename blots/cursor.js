@@ -1,18 +1,17 @@
-import Parchment from 'parchment';
+import { EmbedBlot, Scope } from 'parchment';
 import TextBlot from './text';
 
-
-class Cursor extends Parchment.Embed {
+class Cursor extends EmbedBlot {
   static value() {
     return undefined;
   }
 
-  constructor(domNode, selection) {
-    super(domNode);
+  constructor(scroll, domNode, selection) {
+    super(scroll, domNode);
     this.selection = selection;
     this.textNode = document.createTextNode(Cursor.CONTENTS);
     this.domNode.appendChild(this.textNode);
-    this._length = 0;
+    this.savedLength = 0;
   }
 
   detach() {
@@ -21,19 +20,21 @@ class Cursor extends Parchment.Embed {
   }
 
   format(name, value) {
-    if (this._length !== 0) {
-      return super.format(name, value);
+    if (this.savedLength !== 0) {
+      super.format(name, value);
+      return;
     }
-    let target = this, index = 0;
-    while (target != null && target.statics.scope !== Parchment.Scope.BLOCK_BLOT) {
+    let target = this;
+    let index = 0;
+    while (target != null && target.statics.scope !== Scope.BLOCK_BLOT) {
       index += target.offset(target.parent);
       target = target.parent;
     }
     if (target != null) {
-      this._length = Cursor.CONTENTS.length;
+      this.savedLength = Cursor.CONTENTS.length;
       target.optimize();
       target.formatAt(index, Cursor.CONTENTS.length, name, value);
-      this._length = 0;
+      this.savedLength = 0;
     }
   }
 
@@ -43,7 +44,7 @@ class Cursor extends Parchment.Embed {
   }
 
   length() {
-    return this._length;
+    return this.savedLength;
   }
 
   position() {
@@ -56,50 +57,90 @@ class Cursor extends Parchment.Embed {
   }
 
   restore() {
-    if (this.selection.composing || this.parent == null) return;
-    let textNode = this.textNode;
-    let range = this.selection.getNativeRange();
-    let restoreText, start, end;
-    if (range != null && range.start.node === textNode && range.end.node === textNode) {
-      [restoreText, start, end] = [textNode, range.start.offset, range.end.offset];
-    }
+    if (this.selection.composing || this.parent == null) return null;
+    const range = this.selection.getNativeRange();
     // Link format will insert text outside of anchor tag
-    while (this.domNode.lastChild != null && this.domNode.lastChild !== this.textNode) {
-      this.domNode.parentNode.insertBefore(this.domNode.lastChild, this.domNode);
+    while (
+      this.domNode.lastChild != null &&
+      this.domNode.lastChild !== this.textNode
+    ) {
+      this.domNode.parentNode.insertBefore(
+        this.domNode.lastChild,
+        this.domNode,
+      );
     }
-    if (this.textNode.data !== Cursor.CONTENTS) {
-      let text = this.textNode.data.split(Cursor.CONTENTS).join('');
-      if (this.next instanceof TextBlot) {
-        restoreText = this.next.domNode;
-        this.next.insertAt(0, text);
-        this.textNode.data = Cursor.CONTENTS;
-      } else {
-        this.textNode.data = text;
-        this.parent.insertBefore(Parchment.create(this.textNode), this);
-        this.textNode = document.createTextNode(Cursor.CONTENTS);
-        this.domNode.appendChild(this.textNode);
+
+    const prevTextBlot = this.prev instanceof TextBlot ? this.prev : null;
+    const prevTextLength = prevTextBlot ? prevTextBlot.length() : 0;
+    const nextTextBlot = this.next instanceof TextBlot ? this.next : null;
+    const nextText = nextTextBlot ? nextTextBlot.text : '';
+    const { textNode } = this;
+    // take text from inside this blot and reset it
+    const newText = textNode.data.split(Cursor.CONTENTS).join('');
+    textNode.data = Cursor.CONTENTS;
+
+    // proactively merge TextBlots around cursor so that optimization
+    // doesn't lose the cursor.  the reason we are here in cursor.restore
+    // could be that the user clicked in prevTextBlot or nextTextBlot, or
+    // the user typed something.
+    let mergedTextBlot;
+    if (prevTextBlot) {
+      mergedTextBlot = prevTextBlot;
+      if (newText || nextTextBlot) {
+        prevTextBlot.insertAt(prevTextBlot.length(), newText + nextText);
+        if (nextTextBlot) {
+          nextTextBlot.remove();
+        }
+      }
+    } else if (nextTextBlot) {
+      mergedTextBlot = nextTextBlot;
+      nextTextBlot.insertAt(0, newText);
+    } else {
+      const newTextNode = document.createTextNode(newText);
+      mergedTextBlot = this.scroll.create(newTextNode);
+      this.parent.insertBefore(mergedTextBlot, this);
+    }
+
+    this.remove();
+    if (range) {
+      // calculate selection to restore
+      const remapOffset = (node, offset) => {
+        if (prevTextBlot && node === prevTextBlot.domNode) {
+          return offset;
+        }
+        if (node === textNode) {
+          return prevTextLength + offset - 1;
+        }
+        if (nextTextBlot && node === nextTextBlot.domNode) {
+          return prevTextLength + newText.length + offset;
+        }
+        return null;
+      };
+
+      const start = remapOffset(range.start.node, range.start.offset);
+      const end = remapOffset(range.end.node, range.end.offset);
+      if (start !== null && end !== null) {
+        return {
+          startNode: mergedTextBlot.domNode,
+          startOffset: start,
+          endNode: mergedTextBlot.domNode,
+          endOffset: end,
+        };
       }
     }
-    this.remove();
-    if (start != null) {
-      [start, end] = [start, end].map(function(offset) {
-        return Math.max(0, Math.min(restoreText.data.length, offset - 1));
-      });
-      return {
-        startNode: restoreText,
-        startOffset: start,
-        endNode: restoreText,
-        endOffset: end
-      };
-    }
+    return null;
   }
 
   update(mutations, context) {
-    if (mutations.some((mutation) => {
-      return mutation.type === 'characterData' && mutation.target === this.textNode;
-    })) {
-      let range = this.restore();
-      if (range && context) context.range = range;
+    if (
+      mutations.some(mutation => {
+        return (
+          mutation.type === 'characterData' && mutation.target === this.textNode
+        );
+      })
+    ) {
+      const range = this.restore();
+      if (range) context.range = range;
     }
   }
 
@@ -110,7 +151,6 @@ class Cursor extends Parchment.Embed {
 Cursor.blotName = 'cursor';
 Cursor.className = 'ql-cursor';
 Cursor.tagName = 'span';
-Cursor.CONTENTS = "\uFEFF";   // Zero width no break space
-
+Cursor.CONTENTS = '\uFEFF'; // Zero width no break space
 
 export default Cursor;
