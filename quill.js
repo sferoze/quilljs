@@ -49,6 +49,8 @@ import Delta from 'quill-delta';
 import Keys from './modules/quill-mention/constants/keys';
 import './modules/quill-mention/blots/mention';
 
+import {Scope} from 'parchment';
+
 const numberIsNaN = function (x) {
   return x !== x;
 };
@@ -119,7 +121,6 @@ Quill.register(
 );
 
 let History = Quill.import('modules/history');
-
 function endsWithNewlineChange(scroll, delta) {
   const lastOp = delta.ops[delta.ops.length - 1];
   if (lastOp == null) return false;
