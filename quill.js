@@ -120,6 +120,31 @@ Quill.register(
 
 let History = Quill.import('modules/history');
 
+function endsWithNewlineChange(scroll, delta) {
+  const lastOp = delta.ops[delta.ops.length - 1];
+  if (lastOp == null) return false;
+  if (lastOp.insert != null) {
+    return typeof lastOp.insert === 'string' && lastOp.insert.endsWith('\n');
+  }
+  if (lastOp.attributes != null && scroll != null) {
+    return Object.keys(lastOp.attributes).some(attr => {
+      return scroll.query(attr, Scope.BLOCK) != null;
+    });
+  }
+  return false;
+}
+window.DeltaEndsWithNewlineChange = endsWithNewlineChange;
+function getLastChangeIndex(scroll, delta) {
+  const deleteLength = delta.reduce((length, op) => {
+    return length + (op.delete || 0);
+  }, 0);
+  let changeIndex = delta.length() - deleteLength;
+  if (endsWithNewlineChange(scroll, delta)) {
+    changeIndex -= 1;
+  }
+  return changeIndex;
+}
+
 class HistoryExtension extends History {
   constructor(quill, options) {
     super(quill, options);
