@@ -373,7 +373,7 @@ class MagicUrl {
           const split = str.split(match)
           const beforeLink = split.shift()
           newDelta.insert(beforeLink)
-          newDelta.insert(match, {link: match})
+          newDelta.insert(match, {link: this.normalize(match)})
           str = split.join(match)
         })
         newDelta.insert(str)
@@ -428,19 +428,19 @@ class MagicUrl {
             .retain(index)
             .delete(url.length)
             .insert(url, {link: this.normalize(url)})
-          this.quill.updateContents(ops)
+          this.quill.updateContents(ops, 'user')
         } else if (!!title) {
           const ops = new Delta()
             .retain(index)
             .delete(url.length)
             .insert(title, {link: this.normalize(url)})
-          this.quill.updateContents(ops)
+          this.quill.updateContents(ops, 'user')
         } else {
           const ops = new Delta()
             .retain(index)
             .delete(url.length)
             .insert(url, {link: this.normalize(url)})
-          this.quill.updateContents(ops)
+          this.quill.updateContents(ops, 'user')
         }
       });
     } else {
@@ -448,7 +448,7 @@ class MagicUrl {
         .retain(index)
         .delete(url.length)
         .insert(url, {link: this.normalize(url)})
-      this.quill.updateContents(ops)
+      this.quill.updateContents(ops, 'user')
     }
   }
   normalize (url) {
