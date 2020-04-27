@@ -1,6 +1,7 @@
 import Delta from 'quill-delta';
+import cloneDeep from 'lodash.clonedeep';
+import merge from 'lodash.merge';
 import * as Parchment from 'parchment';
-import extend from 'extend';
 import Editor from './editor';
 import Emitter from './emitter';
 import Module from './module';
@@ -76,7 +77,6 @@ class Quill {
     instances.set(this.container, this);
     this.root = this.addContainer('ql-editor');
     this.root.classList.add('ql-blank');
-    // this.root.setAttribute('data-gramm', false);
     this.scrollingContainer = this.options.scrollingContainer || this.root;
     this.emitter = new Emitter();
     const ScrollBlot = this.options.registry.query(
@@ -458,8 +458,7 @@ Quill.imports = {
 };
 
 function expandConfig(container, userConfig) {
-  userConfig = extend(
-    true,
+  userConfig = merge(
     {
       container,
       modules: {
@@ -481,7 +480,7 @@ function expandConfig(container, userConfig) {
       );
     }
   }
-  const themeConfig = extend(true, {}, userConfig.theme.DEFAULTS);
+  const themeConfig = cloneDeep(userConfig.theme.DEFAULTS);
   [themeConfig, userConfig].forEach(config => {
     config.modules = config.modules || {};
     Object.keys(config.modules).forEach(module => {
@@ -514,8 +513,7 @@ function expandConfig(container, userConfig) {
       container: userConfig.modules.toolbar,
     };
   }
-  userConfig = extend(
-    true,
+  userConfig = merge(
     {},
     Quill.DEFAULTS,
     { modules: moduleConfig },

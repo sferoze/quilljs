@@ -1,6 +1,6 @@
-import clone from 'clone';
-import equal from 'deep-equal';
-import extend from 'extend';
+import cloneDeep from 'lodash.clonedeep';
+import isEqual from 'lodash.isequal';
+import merge from 'lodash.merge';
 import Delta, { AttributeMap } from 'quill-delta';
 import { LeafBlot } from 'parchment';
 import { Range } from './selection';
@@ -42,10 +42,10 @@ class Editor {
           }
           this.scroll.insertAt(index, text);
           const [line, offset] = this.scroll.line(index);
-          let formats = extend({}, bubbleFormats(line));
+          let formats = merge({}, bubbleFormats(line));
           if (line instanceof Block) {
             const [leaf] = line.descendant(LeafBlot, offset);
-            formats = extend(formats, bubbleFormats(leaf));
+            formats = merge(formats, bubbleFormats(leaf));
           }
           attributes = AttributeMap.diff(formats, attributes) || {};
         } else if (typeof op.insert === 'object') {
@@ -85,7 +85,7 @@ class Editor {
       });
     });
     this.scroll.optimize();
-    const delta = new Delta().retain(index).retain(length, clone(formats));
+    const delta = new Delta().retain(index).retain(length, cloneDeep(formats));
     return this.update(delta);
   }
 
@@ -93,7 +93,7 @@ class Editor {
     Object.keys(formats).forEach(format => {
       this.scroll.formatAt(index, length, format, formats[format]);
     });
-    const delta = new Delta().retain(index).retain(length, clone(formats));
+    const delta = new Delta().retain(index).retain(length, cloneDeep(formats));
     return this.update(delta);
   }
 
@@ -123,7 +123,7 @@ class Editor {
       lines = this.scroll.lines(index, length);
       leaves = this.scroll.descendants(LeafBlot, index, length);
     }
-    const formatsArr = [lines, leaves].map(blots => {
+    [lines, leaves] = [lines, leaves].map(blots => {
       if (blots.length === 0) return {};
       let formats = bubbleFormats(blots.shift());
       while (Object.keys(formats).length > 0) {
@@ -133,7 +133,7 @@ class Editor {
       }
       return formats;
     });
-    return extend.apply(extend, formatsArr);
+    return { ...lines, ...leaves };
   }
 
   getHTML(index, length) {
@@ -162,7 +162,9 @@ class Editor {
     Object.keys(formats).forEach(format => {
       this.scroll.formatAt(index, text.length, format, formats[format]);
     });
-    return this.update(new Delta().retain(index).insert(text, clone(formats)));
+    return this.update(
+      new Delta().retain(index).insert(text, cloneDeep(formats)),
+    );
   }
 
   isBlank() {
@@ -223,7 +225,7 @@ class Editor {
       this.delta = oldDelta.compose(change);
     } else {
       this.delta = this.getDelta();
-      if (!change || !equal(oldDelta.compose(change), this.delta)) {
+      if (!change || !isEqual(oldDelta.compose(change), this.delta)) {
         change = oldDelta.diff(this.delta, selectionInfo);
       }
     }

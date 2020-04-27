@@ -1,6 +1,5 @@
-import clone from 'clone';
-import equal from 'deep-equal';
-import extend from 'extend';
+import cloneDeep from 'lodash.clonedeep';
+import isEqual from 'lodash.isequal';
 import Delta, { AttributeMap } from 'quill-delta';
 import { EmbedBlot, Scope, TextBlot } from 'parchment';
 import Quill from '../core/quill';
@@ -98,7 +97,12 @@ class Keyboard extends Module {
     }
     const keys = Array.isArray(binding.key) ? binding.key : [binding.key];
     keys.forEach(key => {
-      const singleBinding = extend({}, binding, { key }, context, handler);
+      const singleBinding = {
+        ...binding,
+        key,
+        ...context,
+        ...handler,
+      };
       this.bindings[singleBinding.key] = this.bindings[singleBinding.key] || [];
       this.bindings[singleBinding.key].push(singleBinding);
     });
@@ -162,7 +166,7 @@ class Keyboard extends Module {
                 return curContext.format[name] != null;
               if (binding.format[name] === false)
                 return curContext.format[name] == null;
-              return equal(binding.format[name], curContext.format[name]);
+              return isEqual(binding.format[name], curContext.format[name]);
             })
           ) {
             return false;
@@ -195,15 +199,19 @@ class Keyboard extends Module {
       // Always deleting newline here, length always 1
       const [prev] = this.quill.getLine(range.index - 1);
       if (prev) {
-        const curFormats = line.formats();
-        const prevFormats = this.quill.getFormat(range.index - 1, 1);
-        formats = AttributeMap.diff(curFormats, prevFormats) || {};
-        if (Object.keys(formats).length > 0) {
-          // line.length() - 1 targets \n in line, another -1 for newline being deleted
-          const formatDelta = new Delta()
-            .retain(range.index + line.length() - 2)
-            .retain(1, formats);
-          delta = delta.compose(formatDelta);
+        const isPrevLineEmpty =
+          prev.statics.blotName === 'block' && prev.length() <= 1;
+        if (!isPrevLineEmpty) {
+          const curFormats = line.formats();
+          const prevFormats = this.quill.getFormat(range.index - 1, 1);
+          formats = AttributeMap.diff(curFormats, prevFormats) || {};
+          if (Object.keys(formats).length > 0) {
+            // line.length() - 1 targets \n in line, another -1 for newline being deleted
+            const formatDelta = new Delta()
+              .retain(range.index + line.length() - 2)
+              .retain(1, formats);
+            delta = delta.compose(formatDelta);
+          }
         }
       }
     }
@@ -383,7 +391,10 @@ Keyboard.DEFAULTS = {
       format: { list: 'checked' },
       handler(range) {
         const [line, offset] = this.quill.getLine(range.index);
-        const formats = extend({}, line.formats(), { list: 'checked' });
+        const formats = {
+          ...line.formats(),
+          list: 'checked',
+        };
         const delta = new Delta()
           .retain(range.index)
           .insert('\n', formats)
@@ -689,7 +700,7 @@ function normalize(binding) {
   if (typeof binding === 'string' || typeof binding === 'number') {
     binding = { key: binding };
   } else if (typeof binding === 'object') {
-    binding = clone(binding, false);
+    binding = cloneDeep(binding);
   } else {
     return null;
   }
