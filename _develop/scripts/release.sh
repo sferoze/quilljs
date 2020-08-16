@@ -2,13 +2,6 @@
 
 VERSION="$1"
 
-if [ -z "$VERSION" ]; then
-  echo "Version required."
-  exit
-else
-  echo "Releasing $VERSION"
-fi
-
 rm -r release
 rm -r dist
 mkdir release
