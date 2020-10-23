@@ -179,7 +179,8 @@ const ImageFormatAttributesList = [
     'alt',
     'height',
     'width',
-    'style'
+    'style',
+    'onerror'
 ];
 
 const AVMediaAttributesList = [
@@ -289,8 +290,12 @@ class ImageBlot extends BlockEmbed {
   static create(value) {
     let node = super.create();
     if (value.url) {
+      let onerror = 'this.onerror=null;this.src="' + value.url + '"';
+      node.setAttribute('onerror', onerror);
       node.setAttribute('src', FormatImageHandlerUrl(value.url));
     } else if (typeof value === 'string') {
+      let onerror = 'this.onerror=null;this.src="' + value + '"';
+      node.setAttribute('onerror', onerror);
       node.setAttribute('src', FormatImageHandlerUrl(value));
     }
     return node;

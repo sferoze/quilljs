@@ -1,7 +1,5 @@
 #!/bin/bash
 
-VERSION="$1"
-
 rm -r release
 rm -r dist
 mkdir release
