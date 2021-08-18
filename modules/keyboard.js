@@ -244,18 +244,7 @@ class Keyboard extends Module {
   }
 
   handleDeleteRange(range) {
-    const lines = this.quill.getLines(range);
-    let formats = {};
-    if (lines.length > 1) {
-      const firstFormats = lines[0].formats();
-      const lastFormats = lines[lines.length - 1].formats();
-      formats = AttributeMap.diff(lastFormats, firstFormats) || {};
-    }
-    this.quill.deleteText(range, Quill.sources.USER);
-    if (Object.keys(formats).length > 0) {
-      this.quill.formatLine(range.index, 1, formats, Quill.sources.USER);
-    }
-    this.quill.setSelection(range.index, Quill.sources.SILENT);
+    deleteRange({ range, quill: this.quill });
     this.quill.focus();
   }
 
@@ -483,10 +472,8 @@ Keyboard.DEFAULTS = {
       shiftKey: null,
       collapsed: true,
       format: {
-        list: false,
         'code-block': false,
         blockquote: false,
-        header: false,
         table: false,
       },
       prefix: /^\s*?(\d+\.|-|\*|\[ ?\]|\[x\])$/,
@@ -711,6 +698,22 @@ function normalize(binding) {
   return binding;
 }
 
+// TODO: Move into quill.js or editor.js
+function deleteRange({ quill, range }) {
+  const lines = quill.getLines(range);
+  let formats = {};
+  if (lines.length > 1) {
+    const firstFormats = lines[0].formats();
+    const lastFormats = lines[lines.length - 1].formats();
+    formats = AttributeMap.diff(lastFormats, firstFormats) || {};
+  }
+  quill.deleteText(range, Quill.sources.USER);
+  if (Object.keys(formats).length > 0) {
+    quill.formatLine(range.index, 1, formats, Quill.sources.USER);
+  }
+  quill.setSelection(range.index, Quill.sources.SILENT);
+}
+
 function tableSide(table, row, cell, offset) {
   if (row.prev == null && row.next == null) {
     if (cell.prev == null && cell.next == null) {
@@ -727,4 +730,4 @@ function tableSide(table, row, cell, offset) {
   return null;
 }
 
-export { Keyboard as default, SHORTKEY, normalize };
+export { Keyboard as default, SHORTKEY, normalize, deleteRange };
