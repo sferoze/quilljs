@@ -1,7 +1,7 @@
 import cloneDeep from 'lodash.clonedeep';
 import isEqual from 'lodash.isequal';
 import merge from 'lodash.merge';
-import Delta, { AttributeMap } from 'quill-delta';
+import Delta, { AttributeMap, Op } from 'quill-delta';
 import { LeafBlot, Scope } from 'parchment';
 import { Range } from './selection';
 import CursorBlot from '../blots/cursor';
@@ -18,28 +18,23 @@ class Editor {
   }
 
   applyDelta(delta) {
-    let consumeNextNewline = false;
     this.scroll.update();
     let scrollLength = this.scroll.length();
     this.scroll.batchStart();
     const normalizedDelta = normalizeDelta(delta);
+    const deleteDelta = new Delta();
     normalizedDelta.reduce((index, op) => {
-      const length = op.retain || op.delete || op.insert.length || 1;
+      const length = Op.length(op);
       let attributes = op.attributes || {};
+      let addedNewline = false;
       if (op.insert != null) {
+        deleteDelta.retain(length);
         if (typeof op.insert === 'string') {
-          let text = op.insert;
-          if (text.endsWith('\n') && consumeNextNewline) {
-            consumeNextNewline = false;
-            text = text.slice(0, -1);
-          }
-          if (
-            (index >= scrollLength ||
-              this.scroll.descendant(BlockEmbed, index)[0]) &&
-            !text.endsWith('\n')
-          ) {
-            consumeNextNewline = true;
-          }
+          const text = op.insert;
+          addedNewline =
+            !text.endsWith('\n') &&
+            (scrollLength <= index ||
+              this.scroll.descendant(BlockEmbed, index)[0]);
           this.scroll.insertAt(index, text);
           const [line, offset] = this.scroll.line(index);
           let formats = merge({}, bubbleFormats(line));
@@ -51,27 +46,30 @@ class Editor {
         } else if (typeof op.insert === 'object') {
           const key = Object.keys(op.insert)[0]; // There should only be one key
           if (key == null) return index;
-          if (
+          addedNewline =
             this.scroll.query(key, Scope.INLINE) != null &&
-            this.scroll.descendant(BlockEmbed, index)[0]
-          ) {
-            consumeNextNewline = true;
-          }
+            (scrollLength <= index ||
+              this.scroll.descendant(BlockEmbed, index)[0]);
           this.scroll.insertAt(index, key, op.insert[key]);
         }
         scrollLength += length;
+      } else {
+        deleteDelta.push(op);
       }
       Object.keys(attributes).forEach(name => {
         this.scroll.formatAt(index, length, name, attributes[name]);
       });
-      return index + length;
+      const addedLength = addedNewline ? 1 : 0;
+      scrollLength += addedLength;
+      deleteDelta.delete(addedLength);
+      return index + length + addedLength;
     }, 0);
-    normalizedDelta.reduce((index, op) => {
+    deleteDelta.reduce((index, op) => {
       if (typeof op.delete === 'number') {
         this.scroll.deleteAt(index, op.delete);
         return index;
       }
-      return index + (op.retain || op.insert.length || 1);
+      return index + Op.length(op);
     }, 0);
     this.scroll.batchEnd();
     this.scroll.optimize();
