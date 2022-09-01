@@ -116,6 +116,8 @@ class Keyboard extends Module {
       );
       const matches = bindings.filter(binding => Keyboard.match(evt, binding));
       if (matches.length === 0) return;
+      const blot = Quill.find(evt.target, true);
+      if (blot && blot.scroll !== this.quill.scroll) return;
       const range = this.quill.getSelection();
       if (range == null || !this.quill.hasFocus()) return;
       const [line, offset] = this.quill.getLine(range.index);
@@ -549,8 +551,17 @@ function makeCodeBlockHandler(indent) {
     key: 'Tab',
     shiftKey: !indent,
     format: { 'code-block': true },
-    handler(range) {
+    handler(range, { event }) {
       const CodeBlock = this.quill.scroll.query('code-block');
+      if (range.length === 0 && !event.shiftKey) {
+        this.quill.insertText(range.index, CodeBlock.TAB, Quill.sources.USER);
+        this.quill.setSelection(
+          range.index + CodeBlock.TAB.length,
+          Quill.sources.SILENT,
+        );
+        return;
+      }
+
       const lines =
         range.length === 0
           ? this.quill.getLines(range.index, 1)
@@ -691,7 +702,7 @@ function normalize(binding) {
   return binding;
 }
 
-// TODO: Move into quill.js or editor.js
+// TODO: Move into quill.ts or editor.ts
 function deleteRange({ quill, range }) {
   const lines = quill.getLines(range);
   let formats = {};
